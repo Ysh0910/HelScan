@@ -2,12 +2,12 @@ import './App.css';
 import { BrowserRouter, Routes, Route, createBrowserRouter, RouterProvider } from 'react-router-dom';
 import InputForm from '../components/inputForm';
 import ProfilePage from '../components/ProfilePage';
-import resultPage from '../components/resultPage';
+import ResultPage from '../components/ResultPage';
 
 let Router = createBrowserRouter([
   { path: "/inputform", Component: InputForm },
   { path: "/rider/:id", Component: ProfilePage},
-  { path: "/u/:id", Component:resultPage}
+  { path: "/u/:id", Component:ResultPage}
 ]);
 
 function App() {

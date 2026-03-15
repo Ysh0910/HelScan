@@ -1,26 +1,80 @@
+import { useState } from 'react';
 import { useForm } from "react-hook-form";
 import axios from 'axios';
+import imageCompression from 'browser-image-compression';
+import { useNavigate } from 'react-router-dom'
 
-export default function InputForm(){
+export default function InputForm() {
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting},
+        setValue,
+        formState: { errors, isSubmitting },
     } = useForm();
 
-    const onSubmit = async (data)=> {
-        console.log("Form Data:", data);
-        try{
-            await axios.post('http://localhost:3000/riderform', data);
+    //states for reducing pic size
+    const navigate = useNavigate();
+    const [isUploading, setIsUploading] = useState(false);
+    const [photoUrl, setPhotoUrl] = useState("");
+
+    const onSubmit = async (data) => {
+        console.log("Form Data sent:", data);
+        try {
+            const response = await axios.post('http://localhost:3000/riderform', data);
             alert("Profile Saved");
-        }catch(e){
+            navigate(`/result/${response.data.id}`);
+        } catch (e) {
             console.error(e);
             alert("Error saving data");
         }
     };
 
+    const handlePhotoSelection = async (event) => {
+        const originalFile = event.target.files[0];
+        if (!originalFile) return;
+
+        console.log("Original Size:", (originalFile.size / 1024 / 1024).toFixed(2), "MB");
+
+        const options = {
+            maxSizeMB: 0.2,
+            maxWidthOrHeight: 800,
+            useWebWorker: true
+        };
+
+        try {
+            setIsUploading(true);
+
+            const compressedFile = await imageCompression(originalFile, options);
+            console.log("Compressed Size:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+
+            const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+            const presetName = import.meta.env.VITE_CLOUDINARY_PRESET_NAME;
+            //uploading to cloudinary
+            const formData = new FormData();
+            formData.append("file", compressedFile);
+            formData.append("upload_preset", presetName)
+
+            const res = await axios.post(
+                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+                formData
+            );
+
+            const uploadedUrl = res.data.secure_url;
+            setPhotoUrl(uploadedUrl);
+            setValue("photo", uploadedUrl);
+            alert("Photo compressed and uploaded!");
+
+        } catch (error) {
+            console.error("Compression or Upload Error:", error);
+            alert("Failed to process image");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
+            <input type="hidden" {...register("photo")} />
             <div>
                 <label>FirstName</label>
                 <input type="text" {...register("firstName", { required: true })} />
@@ -33,7 +87,7 @@ export default function InputForm(){
                 <label>LastName</label>
                 <input type="text" {...register("lastName")} />
             </div>
-            
+
             <br />
 
             <div>
@@ -42,6 +96,25 @@ export default function InputForm(){
             </div>
 
             <br />
+            <div>
+                <label>Upload Photo:</label>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelection}
+                    disabled={isUploading}
+                />
+
+                {isUploading && <p>Compressing and Uploading...</p>}
+                {/*Live Preview of uploaded pic */}
+
+                {photoUrl && (
+                    <div style={{ marginTop: '10px' }}>
+                        <p>Preview:</p>
+                        <img src={photoUrl} alt="Rider" style={{ width: '150px', borderRadius: '10px' }} />
+                    </div>
+                )}
+            </div>
 
             <div>
                 <label>Blood Group:</label>
@@ -85,11 +158,11 @@ export default function InputForm(){
                 <input type="text" {...register("allergy")} />
             </div>
 
-            <br /> 
+            <br />
 
             <div>
                 <label>Medical Conditions</label>
-                <input type="text" {...register("medicalConditions")}/>
+                <input type="text" {...register("medicalConditions")} />
             </div>
 
             <br />
