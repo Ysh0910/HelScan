@@ -26,7 +26,7 @@ HelScan is a web application that lets riders create a digital emergency medical
 | Vite | Build tool and dev server |
 | React Router DOM v7 | Client-side routing |
 | React Hook Form | Form state management and validation |
-| Axios | HTTP client for API calls |
+| Fetch API | Native HTTP client for API calls |
 | qrcode.react | QR code rendering in the browser |
 | browser-image-compression | Client-side image compression before upload |
 | Cloudinary (`@cloudinary/react`, `@cloudinary/url-gen`) | Cloud image storage and delivery |

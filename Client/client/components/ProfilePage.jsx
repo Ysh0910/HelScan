@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios';
 import { useParams } from 'react-router-dom';
 
 const ProfilePage = () => {
@@ -9,8 +8,14 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchRider = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/rider/${id}`)
-        setRiderData(response.data);
+        const response = await fetch(`http://localhost:3000/rider/${id}`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch rider');
+        }
+
+        const rider = await response.json();
+        setRiderData(rider);
       } catch (error) {
         console.log("error fetching data", error);
       }

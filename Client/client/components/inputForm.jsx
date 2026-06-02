@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useForm } from "react-hook-form";
-import axios from 'axios';
 import imageCompression from 'browser-image-compression';
 import { useNavigate } from 'react-router-dom'
 
@@ -20,9 +19,21 @@ export default function InputForm() {
     const onSubmit = async (data) => {
         console.log("Form Data sent:", data);
         try {
-            const response = await axios.post('http://localhost:3000/riderform', data);
+            const response = await fetch('http://localhost:3000/riderform', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save profile');
+            }
+
+            const result = await response.json();
             alert("Profile Saved");
-            navigate(`/result/${response.data.id}`);
+            navigate(`/result/${result.id}`);
         } catch (e) {
             console.error(e);
             alert("Error saving data");
@@ -54,12 +65,18 @@ export default function InputForm() {
             formData.append("file", compressedFile);
             formData.append("upload_preset", presetName)
 
-            const res = await axios.post(
-                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-                formData
-            );
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: 'POST',
+                body: formData,
+            });
 
-            const uploadedUrl = res.data.secure_url;
+            if (!res.ok) {
+                throw new Error('Failed to upload image');
+            }
+
+            const uploadResult = await res.json();
+
+            const uploadedUrl = uploadResult.secure_url;
             setPhotoUrl(uploadedUrl);
             setValue("photo", uploadedUrl);
             alert("Photo compressed and uploaded!");

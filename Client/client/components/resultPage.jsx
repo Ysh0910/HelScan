@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
 
 const ResultPage = () => {
@@ -9,8 +8,14 @@ const ResultPage = () => {
 
     useEffect(() => {
         const getRider = async () => {
-            const res = await axios.get(`http://localhost:3000/rider/${id}`);
-            setRider(res.data);
+            const response = await fetch(`http://localhost:3000/rider/${id}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch rider');
+            }
+
+            const riderData = await response.json();
+            setRider(riderData);
         };
         getRider();
     }, [id]);

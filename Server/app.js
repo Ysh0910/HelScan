@@ -69,7 +69,7 @@ app.post("/riderform", async (req, res) => {
 app.get('/download-qr/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const publicUrl = `http://localhost:5173/u/${id}`; //later get changed to the vercer url
+        const publicUrl = `http://localhost:5173/rider/${id}`; //later get changed to the vercer url
 
         const qrBuffer = await QRCode.toBuffer(publicUrl, {
             width: 400,
