@@ -1,0 +1,78 @@
+const User = require('../models/user');
+const { buildTranslations } = require('../utils/translate');
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const QRCode = require('qrcode');
+
+// GET /rider/:id
+async function getRider(req, res) {
+    try {
+        const rider = await User.findById(req.params.id);
+        if (!rider) return res.status(404).json({ message: 'Rider not found' });
+        res.status(200).json(rider);
+    } catch (error) {
+        console.error('Error fetching rider:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+}
+
+// POST /riderform
+async function createRider(req, res) {
+    try {
+        const newRider = new User(req.body);
+        const savedUser = await newRider.save();
+
+        // Respond immediately — translation runs in the background
+        res.status(201).json({ message: 'Saved', id: savedUser._id });
+
+        buildTranslations(savedUser)
+            .then(async (translations) => {
+                await User.findByIdAndUpdate(savedUser._id, { $set: { translations } });
+                console.log(`Translations stored for rider ${savedUser._id}`);
+            })
+            .catch((err) => {
+                console.error('Translation error (non-fatal):', err.message);
+            });
+
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ error: error.message });
+    }
+}
+
+// GET /download-qr/:id
+async function downloadQR(req, res) {
+    try {
+        const { id } = req.params;
+        const publicUrl = `http://localhost:5173/rider/${id}`;
+
+        const qrBuffer = await QRCode.toBuffer(publicUrl, {
+            width: 400,
+            margin: 1,
+            errorCorrectionLevel: 'H',
+        });
+
+        const pdfDoc = await PDFDocument.create();
+        const page   = pdfDoc.addPage([216, 144]);
+        const qrImage = await pdfDoc.embedPng(qrBuffer);
+        const font    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+        page.drawRectangle({ x: 0, y: 120, width: 216, height: 24, color: rgb(0.8, 0, 0) });
+        page.drawText('EMERGENCY MEDICAL ID', {
+            x: 45, y: 127, size: 10, font, color: rgb(1, 1, 1),
+        });
+        page.drawImage(qrImage, { x: 58, y: 20, width: 100, height: 100 });
+        page.drawText(`ID: ${id}`, {
+            x: 10, y: 5, size: 8, color: rgb(0.5, 0.5, 0.5),
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=sticker-${id}.pdf`);
+        res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        res.status(500).send('Error generating PDF');
+    }
+}
+
+module.exports = { getRider, createRider, downloadQR };
