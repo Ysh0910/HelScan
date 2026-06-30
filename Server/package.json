@@ -14,6 +14,7 @@
     "@types/method-override": "^3.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "google-translate-api-x": "^10.7.1",
     "method-override": "^3.0.0",
     "mongoose": "^9.2.0",
     "path": "^0.12.7",

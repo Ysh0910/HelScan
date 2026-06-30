@@ -86,6 +86,30 @@ const UserSchema = new Schema({
         type: String
     },
 
+    // Multilingual translations — keyed by language code (en, hi, kn)
+    // Each entry mirrors the translatable text fields
+    translations: {
+        type: Map,
+        of: new mongoose.Schema({
+            firstName:                  String,
+            lastName:                   String,
+            identificationMark:         String,
+            allergies:                  String,
+            medicalConditions:          String,
+            currentMedications:         String,
+            previousSurgeriesOrImplants:String,
+            vehicleModel:               String,
+            homeCity:                   String,
+            insuranceProviderName:      String,
+            emergencyContacts: [{
+                name:     String,
+                relation: String,
+                phone:    String,
+            }],
+        }, { _id: false }),
+        default: {},
+    },
+
     isActive: {
         type: Boolean,
         default:true
