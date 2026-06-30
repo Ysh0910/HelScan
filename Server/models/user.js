@@ -42,9 +42,9 @@ const UserSchema = new Schema({
     },
     emergencyContacts: [
         {
-            name:String,
-            relation:String,
-            phone:String
+            name:     String,
+            relation: String,
+            phone:    String
         }
     ],
     insurance:{
@@ -60,6 +60,30 @@ const UserSchema = new Schema({
         medicalHelpline:{
             type:String
         }
+    },
+
+    // Medical extras
+    organDonor: {
+        type: Boolean,
+        default: false
+    },
+    bloodDonorCard: {
+        type: Boolean,
+        default: false
+    },
+    previousSurgeriesOrImplants: {
+        type: String
+    },
+
+    // Vehicle & location
+    vehicleRegistration: {
+        type: String
+    },
+    vehicleModel: {
+        type: String
+    },
+    homeCity: {
+        type: String
     },
 
     isActive: {

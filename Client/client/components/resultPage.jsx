@@ -23,7 +23,7 @@ const ResultPage = () => {
 
     if (!rider) return <p>Generating your sticker...</p>;
 
-    const publicUrl = `${window.location.origin}/u/${id}`;
+    const publicUrl = `${window.location.origin}/rider/${id}`;
 
     return (
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
@@ -41,6 +41,11 @@ const ResultPage = () => {
                 )}
                 <h2>{rider.firstName} {rider.lastName}</h2>
                 <h3 style={{ color: 'red' }}>Blood Group: {rider.bloodGroup}</h3>
+                {rider.vehicleRegistration && <p>Vehicle: {rider.vehicleModel || ''} — {rider.vehicleRegistration}</p>}
+                {rider.insurance?.providerName && <p>Insurance: {rider.insurance.providerName}{rider.insurance.policyNumber ? ` — ${rider.insurance.policyNumber}` : ''}</p>}
+                {(rider.emergencyContacts || []).filter(c => c.phone).map((c, i) => (
+                    <p key={i}>Emergency Contact {i + 1}: {c.name} ({c.relation}) — {c.phone}</p>
+                ))}
             </div>
             {/* -------------------------------------- */}
             <h3>Your safety qr code</h3>

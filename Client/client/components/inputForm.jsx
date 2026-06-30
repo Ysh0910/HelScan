@@ -196,6 +196,114 @@ export default function InputForm() {
 
             <br />
 
+            {/* ── Emergency Contacts ── */}
+            <fieldset>
+                <legend>Emergency Contact 1</legend>
+                <div>
+                    <label>Name</label>
+                    <input type="text" {...register("emergencyContacts[0].name")} />
+                </div>
+                <div>
+                    <label>Phone</label>
+                    <input type="tel" {...register("emergencyContacts[0].phone")} />
+                </div>
+                <div>
+                    <label>Relation</label>
+                    <input type="text" placeholder="e.g. Father, Spouse" {...register("emergencyContacts[0].relation")} />
+                </div>
+            </fieldset>
+
+            <br />
+
+            <fieldset>
+                <legend>Emergency Contact 2 (Backup)</legend>
+                <div>
+                    <label>Name</label>
+                    <input type="text" {...register("emergencyContacts[1].name")} />
+                </div>
+                <div>
+                    <label>Phone</label>
+                    <input type="tel" {...register("emergencyContacts[1].phone")} />
+                </div>
+                <div>
+                    <label>Relation</label>
+                    <input type="text" placeholder="e.g. Mother, Friend" {...register("emergencyContacts[1].relation")} />
+                </div>
+            </fieldset>
+
+            <br />
+
+            {/* ── Medical extras ── */}
+            <div>
+                <label>Current Medications</label>
+                <input type="text" placeholder="e.g. Blood thinners, Insulin" {...register("currentMedications")} />
+            </div>
+
+            <br />
+
+            <div>
+                <label>
+                    <input type="checkbox" {...register("organDonor")} />
+                    {" "}Organ Donor
+                </label>
+            </div>
+
+            <br />
+
+            <div>
+                <label>
+                    <input type="checkbox" {...register("bloodDonorCard")} />
+                    {" "}Blood Donor Card Holder
+                </label>
+            </div>
+
+            <br />
+
+            <div>
+                <label>Previous Surgeries / Implants</label>
+                <input type="text" placeholder="e.g. Pacemaker, Metal rod in left leg" {...register("previousSurgeriesOrImplants")} />
+            </div>
+
+            <br />
+
+            {/* ── Insurance ── */}
+            <fieldset>
+                <legend>Insurance</legend>
+                <div>
+                    <label>Provider Name</label>
+                    <input type="text" placeholder="e.g. Star Health, HDFC Ergo" {...register("insurance.providerName")} />
+                </div>
+                <br />
+                <div>
+                    <label>Policy Number</label>
+                    <input type="text" placeholder="Alphanumeric policy ID" {...register("insurance.policyNumber")} />
+                </div>
+            </fieldset>
+
+            <br />
+
+            {/* ── Vehicle & Location ── */}
+            <div>
+                <label>Vehicle Registration Number</label>
+                <input type="text" placeholder="e.g. KA-01-AB-1234" {...register("vehicleRegistration")} />
+            </div>
+
+            <br />
+
+            <div>
+                <label>Vehicle Model</label>
+                <input type="text" placeholder="e.g. Royal Enfield Classic 350" {...register("vehicleModel")} />
+            </div>
+
+            <br />
+
+            <div>
+                <label>Home City / Emergency Address</label>
+                <input type="text" placeholder="e.g. Bangalore" {...register("homeCity")} />
+            </div>
+
+            <br />
+
             <button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : "Save"}
             </button>
