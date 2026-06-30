@@ -48,7 +48,6 @@ app.get('/rider/:id', async (req, res) => {
 });
 
 app.post("/riderform", async (req, res) => {
-    res.send("takingriderinput");
     try {
         let details = req.body;
         console.log(details);
@@ -63,7 +62,6 @@ app.post("/riderform", async (req, res) => {
         console.error("DataBase Error:", error);
         return res.status(500).json({ error: error.message });
     }
-    //will need to take data from a form, and send it in json to this, and then get's stored in db
 })
 
 app.get('/download-qr/:id', async (req, res) => {

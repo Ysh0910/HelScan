@@ -44,26 +44,37 @@ export default function InputForm() {
         const originalFile = event.target.files[0];
         if (!originalFile) return;
 
-        console.log("Original Size:", (originalFile.size / 1024 / 1024).toFixed(2), "MB");
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const presetName = import.meta.env.VITE_CLOUDINARY_PRESET_NAME;
 
-        const options = {
-            maxSizeMB: 0.2,
-            maxWidthOrHeight: 800,
-            useWebWorker: true
-        };
+        if (!cloudName || !presetName) {
+            alert("Cloudinary is not configured. Check your .env file for VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_PRESET_NAME.");
+            return;
+        }
+
+        const originalSizeMB = originalFile.size / 1024 / 1024;
+        console.log("Original Size:", originalSizeMB.toFixed(2), "MB");
 
         try {
             setIsUploading(true);
 
-            const compressedFile = await imageCompression(originalFile, options);
-            console.log("Compressed Size:", (compressedFile.size / 1024 / 1024).toFixed(2), "MB");
+            // Only compress if the file is actually larger than the target
+            let fileToUpload = originalFile;
+            if (originalSizeMB > 0.2) {
+                const options = {
+                    maxSizeMB: 0.2,
+                    maxWidthOrHeight: 800,
+                    useWebWorker: true,
+                };
+                fileToUpload = await imageCompression(originalFile, options);
+                console.log("Compressed Size:", (fileToUpload.size / 1024 / 1024).toFixed(2), "MB");
+            } else {
+                console.log("File already under 0.2 MB, skipping compression.");
+            }
 
-            const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-            const presetName = import.meta.env.VITE_CLOUDINARY_PRESET_NAME;
-            //uploading to cloudinary
             const formData = new FormData();
-            formData.append("file", compressedFile);
-            formData.append("upload_preset", presetName)
+            formData.append("file", fileToUpload);
+            formData.append("upload_preset", presetName);
 
             const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
                 method: 'POST',
@@ -71,19 +82,20 @@ export default function InputForm() {
             });
 
             if (!res.ok) {
-                throw new Error('Failed to upload image');
+                const errBody = await res.json().catch(() => ({}));
+                throw new Error(`Cloudinary upload failed (${res.status}): ${errBody.error?.message || res.statusText}`);
             }
 
             const uploadResult = await res.json();
-
             const uploadedUrl = uploadResult.secure_url;
+
             setPhotoUrl(uploadedUrl);
             setValue("photo", uploadedUrl);
-            alert("Photo compressed and uploaded!");
+            alert("Photo uploaded successfully!");
 
         } catch (error) {
-            console.error("Compression or Upload Error:", error);
-            alert("Failed to process image");
+            console.error("Photo processing error:", error);
+            alert(`Failed to process image: ${error.message}`);
         } finally {
             setIsUploading(false);
         }

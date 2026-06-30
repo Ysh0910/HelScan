@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 
 const ResultPage = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [rider, setRider] = useState(null);
 
     useEffect(() => {
@@ -52,6 +53,14 @@ const ResultPage = () => {
                     style={{ padding: '10px 20px', cursor: 'pointer' }}
                 >
                     Download
+                </button>
+            </div>
+            <div style={{ marginTop: '24px' }}>
+                <button
+                    onClick={() => navigate('/')}
+                    style={{ padding: '8px 20px', cursor: 'pointer' }}
+                >
+                    Back to Home
                 </button>
             </div>
         </div>
