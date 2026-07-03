@@ -3,6 +3,7 @@ const cors         = require('cors');
 const methodOverride = require('method-override');
 const mongoose     = require('mongoose');
 const riderRoutes  = require('./routes/rider');
+const authRoutes   = require('./routes/auth');
 
 const app  = express();
 const PORT = 3000;
@@ -21,6 +22,7 @@ mongoose.connect(MONGO_URL)
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 app.get('/', (_req, res) => res.send('HelScan API running'));
+app.use('/', authRoutes);
 app.use('/', riderRoutes);
 
 // ── Start ─────────────────────────────────────────────────────────────────────

@@ -21,6 +21,12 @@ async function createRider(req, res) {
         const newRider = new User(req.body);
         const savedUser = await newRider.save();
 
+        // Link riderId on the auth account if authenticated
+        if (req.user?.userId) {
+            const AuthUser = require('../models/authUser');
+            await AuthUser.findByIdAndUpdate(req.user.userId, { riderId: savedUser._id });
+        }
+
         // Respond immediately — translation runs in the background
         res.status(201).json({ message: 'Saved', id: savedUser._id });
 
@@ -75,4 +81,36 @@ async function downloadQR(req, res) {
     }
 }
 
-module.exports = { getRider, createRider, downloadQR };
+// PATCH /rider/:id
+async function updateRider(req, res) {
+    try {
+        const updates = req.body;
+
+        // Remove fields that shouldn't be patched directly
+        delete updates._id;
+        delete updates.createdAt;
+        delete updates.translations;
+
+        const rider = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: updates },
+            { new: true, runValidators: true }
+        );
+        if (!rider) return res.status(404).json({ message: 'Rider not found' });
+
+        res.status(200).json({ message: 'Updated', id: rider._id });
+
+        // Re-run translations in background
+        buildTranslations(rider)
+            .then(async (translations) => {
+                await User.findByIdAndUpdate(rider._id, { $set: { translations } });
+            })
+            .catch((err) => console.error('Translation error (non-fatal):', err.message));
+    } catch (error) {
+        console.error('Update error:', error);
+        res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { getRider, createRider, downloadQR, updateRider };
+

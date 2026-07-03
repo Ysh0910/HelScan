@@ -1,0 +1,284 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { apiGet } from "@/lib/api";
+import { LANGS, t } from "@/lib/i18n";
+import { Heart, Phone, User, Loader2, Languages } from "lucide-react";
+
+export const Route = createFileRoute("/rider/$id")({
+  head: () => ({
+    meta: [
+      { title: "Emergency Medical ID — HelScan" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: PublicRiderPage,
+});
+
+// Never-translate keys
+const NEVER_TRANSLATE = new Set([
+  "bloodGroup",
+  "dob",
+  "height",
+  "weight",
+  "insurance",
+  "vehicleRegistration",
+]);
+
+function pick(rider, key, lang) {
+  if (lang === "en" || NEVER_TRANSLATE.has(key)) return rider[key];
+  const tr = rider.translations?.[lang];
+  if (tr && key in tr && tr[key] != null && tr[key] !== "") return tr[key];
+  return rider[key];
+}
+
+function PublicRiderPage() {
+  const { id } = Route.useParams();
+  const [rider, setRider] = useState(null);
+  const [error, setError] = useState(null);
+  const [lang, setLang] = useState("en");
+
+  useEffect(() => {
+    apiGet(`/rider/${id}`)
+      .then(setRider)
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load"),
+      );
+  }, [id]);
+
+  if (error) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background px-4">
+        <div className="text-center">
+          <p className="text-destructive">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!rider) {
+    return (
+      <div className="grid min-h-screen place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const hasTranslation = lang === "en" || !!rider.translations?.[lang];
+  const fullName = `${rider.firstName ?? ""} ${rider.lastName ?? ""}`.trim();
+  const g = (k) => pick(rider, k, lang);
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Emergency banner */}
+      <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-elegant">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2">
+            <Heart
+              className="h-5 w-5 shrink-0 animate-pulse"
+              fill="currentColor"
+            />
+            <span className="text-sm font-bold uppercase tracking-widest sm:text-base">
+              {t("emergencyId", lang)}
+            </span>
+          </div>
+          <div className="no-print flex items-center gap-1 rounded-full bg-white/15 p-0.5">
+            <Languages className="ml-2 h-3.5 w-3.5 opacity-80" />
+            {LANGS.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => setLang(l.code)}
+                className={
+                  "rounded-full px-2.5 py-1 text-xs font-medium transition-all " +
+                  (lang === l.code
+                    ? "bg-white text-primary"
+                    : "text-primary-foreground/90 hover:bg-white/10")
+                }
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
+        {!hasTranslation && (
+          <div className="mb-4 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+            {t("translationsLoading", lang)}
+          </div>
+        )}
+
+        {/* Identity card */}
+        <div className="overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-card shadow-elegant">
+          <div className="flex items-center gap-4 p-5 sm:p-6">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-primary/20 bg-secondary">
+              {rider.photo ? (
+                <img
+                  src={rider.photo}
+                  alt={fullName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="grid h-full w-full place-items-center text-muted-foreground">
+                  <User className="h-10 w-10" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+                {(g("firstName") ?? "") + " " + (g("lastName") ?? "")}
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                  {t("bloodGroup", lang)}
+                </span>
+                <span className="text-3xl font-bold text-primary sm:text-4xl">
+                  {rider.bloodGroup ?? "—"}
+                </span>
+              </div>
+              {rider.dob && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {t("dob", lang)}: {rider.dob}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Sections */}
+        <Section title={t("physical", lang)}>
+          <KV
+            label={t("height", lang)}
+            value={rider.height ? `${rider.height} cm` : null}
+          />
+          <KV
+            label={t("weight", lang)}
+            value={rider.weight ? `${rider.weight} kg` : null}
+          />
+          <KV
+            label={t("identificationMark", lang)}
+            value={g("identificationMark")}
+          />
+        </Section>
+
+        <Section title={t("medical", lang)}>
+          <KV label={t("allergies", lang)} value={g("allergies")} emphasize />
+          <KV
+            label={t("conditions", lang)}
+            value={g("medicalConditions")}
+            emphasize
+          />
+          <KV label={t("medications", lang)} value={g("currentMedications")} />
+          <KV
+            label={t("surgeries", lang)}
+            value={g("previousSurgeriesOrImplants")}
+          />
+          <KV
+            label={t("organDonor", lang)}
+            value={rider.organDonor ? t("yes", lang) : t("no", lang)}
+          />
+
+          <KV
+            label={t("bloodDonor", lang)}
+            value={rider.bloodDonorCard ? t("yes", lang) : t("no", lang)}
+          />
+        </Section>
+
+        <Section title={t("emergencyContacts", lang)}>
+          {rider.emergencyContacts?.filter((c) => c?.name || c?.phone)
+            .length ? (
+            <ul className="divide-y divide-border">
+              {rider.emergencyContacts
+                .filter((c) => c?.name || c?.phone)
+                .map((c, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-3 py-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold">{c.name}</div>
+                      {c.relation && (
+                        <div className="text-xs text-muted-foreground">
+                          {c.relation}
+                        </div>
+                      )}
+                    </div>
+                    {c.phone && (
+                      <a
+                        href={`tel:${c.phone}`}
+                        className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02] active:scale-100"
+                      >
+                        <Phone className="h-4 w-4" />
+                        {c.phone}
+                      </a>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">—</p>
+          )}
+        </Section>
+
+        <Section title={t("insurance", lang)}>
+          <KV
+            label={t("provider", lang)}
+            value={rider.insurance?.providerName}
+          />
+          <KV
+            label={t("policyNumber", lang)}
+            value={rider.insurance?.policyNumber}
+          />
+        </Section>
+
+        <Section title={t("vehicle", lang)}>
+          <KV
+            label={t("registration", lang)}
+            value={rider.vehicleRegistration}
+          />
+          <KV label={t("model", lang)} value={g("vehicleModel")} />
+          <KV label={t("homeCity", lang)} value={g("homeCity")} />
+        </Section>
+
+        <p className="mt-10 pb-8 text-center text-xs text-muted-foreground">
+          Powered by{" "}
+          <span className="font-semibold text-foreground">HelScan</span>
+        </p>
+      </main>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <section className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="border-b border-border bg-secondary/50 px-5 py-3">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          {title}
+        </h2>
+      </div>
+      <div className="px-5 py-4">{children}</div>
+    </section>
+  );
+}
+
+function KV({ label, value, emphasize }) {
+  if (!value) return null;
+  return (
+    <div className="flex flex-col justify-between gap-0.5 py-1.5 sm:flex-row sm:items-baseline sm:gap-4">
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
+      <div
+        className={
+          "text-sm sm:text-right " +
+          (emphasize
+            ? "font-semibold text-primary"
+            : "font-medium text-foreground")
+        }
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
