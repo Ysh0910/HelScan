@@ -1,32 +1,19 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth, clearAuth } from "@/lib/auth";
-import { apiGet } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ShieldPlus, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export function Nav() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [riderId, setRiderId] = useState(null);
-
-  useEffect(() => {
-    if (!token) {
-      setRiderId(null);
-      return;
-    }
-    apiGet("/auth/me", true)
-      .then((me) => setRiderId(me.riderId ?? null))
-      .catch(() => setRiderId(null));
-  }, [token]);
+  const riderId = user?.riderId ?? null;
 
   // Hide nav on public rider view (first-responder scanner UX)
   if (pathname.startsWith("/rider/")) return null;
 
   const handleLogout = () => {
     clearAuth();
-    setRiderId(null);
     navigate({ to: "/" });
   };
 

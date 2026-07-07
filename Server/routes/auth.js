@@ -32,7 +32,7 @@ router.post('/auth/signup', async (req, res) => {
 
         res.status(201).json({
             token,
-            user: { id: user._id, email: user.email },
+            user: { id: user._id, email: user.email, riderId: user.riderId ?? null },
         });
     } catch (err) {
         console.error('Signup error:', err);
@@ -63,7 +63,7 @@ router.post('/auth/login', async (req, res) => {
 
         res.status(200).json({
             token,
-            user: { id: user._id, email: user.email },
+            user: { id: user._id, email: user.email, riderId: user.riderId ?? null },
         });
     } catch (err) {
         console.error('Login error:', err);

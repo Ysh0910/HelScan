@@ -23,13 +23,7 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
-async function fetchMe(token) {
-  const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
+
 
 function SignupPage() {
   const navigate = useNavigate();
@@ -51,13 +45,7 @@ function SignupPage() {
       });
       setAuth(res.token, res.user);
       toast.success("Account created — let's build your medical ID");
-      // Pass token directly — avoids localStorage timing race
-      const me = await fetchMe(res.token);
-      if (me?.riderId) {
-        navigate({ to: "/result/$id", params: { id: String(me.riderId) } });
-      } else {
-        navigate({ to: "/inputform" });
-      }
+      navigate({ to: "/inputform" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Signup failed");
     } finally {

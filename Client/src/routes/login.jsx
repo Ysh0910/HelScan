@@ -23,14 +23,6 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-async function fetchMe(token) {
-  const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
-
 function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -46,13 +38,7 @@ function LoginPage() {
       const res = await apiPost("/auth/login", values);
       setAuth(res.token, res.user);
       toast.success("Welcome back");
-      // Pass token directly — avoids localStorage timing race
-      const me = await fetchMe(res.token);
-      if (me?.riderId) {
-        navigate({ to: "/result/$id", params: { id: String(me.riderId) } });
-      } else {
-        navigate({ to: "/inputform" });
-      }
+      navigate({ to: "/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {

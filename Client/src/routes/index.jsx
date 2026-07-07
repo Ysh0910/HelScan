@@ -1,8 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { apiGet } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 import {
   ShieldPlus,
   QrCode,
@@ -29,20 +27,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { token } = useAuth();
-  const [riderId, setRiderId] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  useEffect(() => {
-    if (!token) {
-      setAuthChecked(true);
-      return;
-    }
-    apiGet("/auth/me", true)
-      .then((me) => setRiderId(me.riderId ?? null))
-      .catch(() => setRiderId(null))
-      .finally(() => setAuthChecked(true));
-  }, [token]);
+  const { user, token } = useAuth();
+  const riderId = user?.riderId ?? null;
+  const authChecked = true;
 
   // Hero CTA logic:
   // - Not logged in → signup + login
@@ -63,9 +50,9 @@ function Landing() {
       </Link>
     </>
   ) : riderId ? (
-    <Link to="/result/$id" params={{ id: riderId }}>
+    <Link to="/edit/$id" params={{ id: String(riderId) }}>
       <Button size="lg" className="h-12 gap-2 px-6 shadow-glow">
-        View my profile <ArrowRight className="h-4 w-4" />
+        Edit profile <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
   ) : (
@@ -83,9 +70,9 @@ function Landing() {
       </Button>
     </Link>
   ) : riderId ? (
-    <Link to="/result/$id" params={{ id: riderId }}>
+    <Link to="/edit/$id" params={{ id: String(riderId) }}>
       <Button size="lg" variant="secondary" className="h-12 gap-2 px-6">
-        View my HelScan <ArrowRight className="h-4 w-4" />
+        Edit profile <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
   ) : (

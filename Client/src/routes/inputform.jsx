@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { apiPost, uploadImage, API_URL } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { getToken, useAuth, getUser, setAuth } from "@/lib/auth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -53,30 +53,27 @@ const STEPS = [
 ];
 
 function InputFormPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const checkedProfile = useRef(false);
 
-  // Auth gate — redirect to login if not authenticated
+  // Auth gate & Profile guard — redirect to login if not authenticated, or to edit if profile exists
   useEffect(() => {
     if (!getToken()) {
       toast.error("Please log in first");
       navigate({ to: "/login" });
       return;
     }
-    // Profile guard — redirect to result page if user already has a profile
-    fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
-      .then((r) => r.json())
-      .then((me) => {
-        if (me?.riderId) {
-          navigate({ to: "/result/$id", params: { id: String(me.riderId) }, replace: true });
-        }
-      })
-      .catch(() => {});
-  }, [navigate]);
+    if (!checkedProfile.current) {
+      checkedProfile.current = true;
+      if (user?.riderId) {
+        navigate({ to: "/edit/$id", params: { id: String(user.riderId) }, replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   // Clear stale drafts that belong to an already-saved profile
   useEffect(() => {
@@ -178,6 +175,12 @@ function InputFormPage() {
     setSubmitting(true);
     try {
       const res = await apiPost("/riderform", data, true);
+      // Update local storage user auth state with the new riderId
+      const currentUser = getUser();
+      if (currentUser) {
+        currentUser.riderId = res.id;
+        setAuth(getToken(), currentUser);
+      }
       // Mark draft as belonging to a saved profile so it doesn't auto-load next time
       try {
         localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...data, _savedId: res.id }));
@@ -482,11 +485,12 @@ function InputFormPage() {
             </Button>
 
             {step < STEPS.length - 1 ? (
-              <Button type="button" onClick={goNext} className="gap-1.5">
+              <Button key="next-btn" type="button" onClick={goNext} className="gap-1.5">
                 Continue <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
               <Button
+                key="submit-btn"
                 type="submit"
                 disabled={submitting || uploading}
                 className="gap-1.5 shadow-elegant"
