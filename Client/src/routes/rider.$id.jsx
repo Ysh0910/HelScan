@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
 import { LANGS, t } from "@/lib/i18n";
 import { Heart, Phone, User, Loader2, Languages } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/rider/$id")({
   head: () => ({
@@ -44,6 +45,51 @@ function PublicRiderPage() {
         setError(e instanceof Error ? e.message : "Failed to load"),
       );
   }, [id]);
+
+  const formatWhatsAppPhone = (phone) => {
+    if (!phone) return "";
+    let cleaned = phone.replace(/\D/g, "");
+    if (cleaned.length === 10) {
+      cleaned = "91" + cleaned;
+    }
+    return cleaned;
+  };
+
+  const triggerWhatsApp = (lat, lng) => {
+    const firstContact = rider?.emergencyContacts?.find((c) => c?.phone);
+    const rawPhone = firstContact?.phone;
+    if (!rawPhone) {
+      toast.error("No emergency contact phone number configured for this rider.");
+      return;
+    }
+    const formattedPhone = formatWhatsAppPhone(rawPhone);
+    let message = "";
+    if (lat !== null && lng !== null) {
+      message = `🚨 EMERGENCY: I scanned this rider's medical ID. They may be in an accident. My exact location is: https://www.google.com/maps?q=${lat},${lng}`;
+    } else {
+      message = `🚨 EMERGENCY: I scanned this rider's medical ID. They may be in an accident. Please call me back!`;
+    }
+    const url = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
+  const handleSOS = () => {
+    if (!navigator.geolocation) {
+      triggerWhatsApp(null, null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        triggerWhatsApp(latitude, longitude);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        triggerWhatsApp(null, null);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  };
 
   if (error) {
     return (
@@ -143,6 +189,19 @@ function PublicRiderPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* SOS Button */}
+        <div className="mt-6 no-print">
+          <button
+            onClick={handleSOS}
+            className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-red-600 hover:bg-red-700 px-6 py-4 text-center text-lg font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-100 cursor-pointer"
+          >
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-2xl bg-red-500 opacity-25" />
+            <span className="relative flex items-center gap-2">
+              <span>🚨</span> Send Emergency SOS
+            </span>
+          </button>
         </div>
 
         {/* Sections */}
