@@ -91,10 +91,22 @@ async function updateRider(req, res) {
         delete updates.createdAt;
         delete updates.translations;
 
+        // Fetch the existing rider to check for photo change
+        const existingRider = await User.findById(req.params.id);
+        if (existingRider && updates.photo && existingRider.photo && updates.photo !== existingRider.photo) {
+            const { extractPublicId, deleteCloudinaryImage } = require('../utils/cloudinary');
+            const publicId = extractPublicId(existingRider.photo);
+            if (publicId) {
+                deleteCloudinaryImage(publicId).catch((err) =>
+                    console.error('Cloudinary delete error:', err.message)
+                );
+            }
+        }
+
         const rider = await User.findByIdAndUpdate(
             req.params.id,
             { $set: updates },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
         if (!rider) return res.status(404).json({ message: 'Rider not found' });
 

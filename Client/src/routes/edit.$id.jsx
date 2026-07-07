@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import imageCompression from "browser-image-compression";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiGet, apiPatch, uploadImage } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import {
   ArrowLeft,
@@ -26,6 +27,7 @@ import {
   Phone,
   Shield,
   Bike,
+  Upload,
 } from "lucide-react";
 
 export const Route = createFileRoute("/edit/$id")({
@@ -71,6 +73,69 @@ function Field({ label, required, error, hint, children }) {
   );
 }
 
+function PhotoField({ photo, uploading, onChange }) {
+  const inputRef = useRef(null);
+  const [drag, setDrag] = useState(false);
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDrag(true);
+      }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDrag(false);
+        onChange(e.dataTransfer.files?.[0] ?? null);
+      }}
+      onClick={() => inputRef.current?.click()}
+      className={
+        "flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed p-5 transition-all " +
+        (drag
+          ? "border-primary bg-primary/5"
+          : "border-border hover:border-primary/50 hover:bg-secondary/40")
+      }
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+      />
+
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-border bg-secondary">
+        {photo ? (
+          <img
+            src={photo}
+            alt="Preview"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center text-muted-foreground">
+            <User className="h-8 w-8" />
+          </div>
+        )}
+        {uploading && (
+          <div className="absolute inset-0 grid place-items-center bg-background/70">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        )}
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Upload className="h-4 w-4" />
+          {photo ? "Replace photo" : "Upload photo"}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Drag & drop or click to browse. JPG or PNG, auto-compressed.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function EditProfilePage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -90,9 +155,12 @@ function EditProfilePage() {
     handleSubmit,
     control,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
+      photo: "",
       firstName: "",
       lastName: "",
       dob: "",
@@ -116,6 +184,28 @@ function EditProfilePage() {
       homeCity: "",
     },
   });
+
+  const photo = watch("photo");
+  const [uploading, setUploading] = useState(false);
+
+  const onPhotoChange = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      });
+      const url = await uploadImage(compressed);
+      setValue("photo", url, { shouldDirty: true });
+      toast.success("Photo uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Load existing rider data
   useEffect(() => {
@@ -144,6 +234,7 @@ function EditProfilePage() {
           firstName: rider.firstName ?? "",
           lastName: rider.lastName ?? "",
           dob,
+          photo: rider.photo ?? "",
           bloodGroup: rider.bloodGroup ?? "",
           height: rider.height ?? "",
           weight: rider.weight ?? "",
@@ -226,6 +317,13 @@ function EditProfilePage() {
         >
           {/* Personal Details */}
           <SectionCard title="Personal Details" icon={User}>
+            <div className="mb-5">
+              <PhotoField
+                photo={photo}
+                uploading={uploading}
+                onChange={onPhotoChange}
+              />
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="First name" required error={errors.firstName?.message}>
                 <Input
