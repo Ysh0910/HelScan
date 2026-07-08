@@ -7,9 +7,30 @@ const requireAuth = require('../middleware/requireAuth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'helscan-dev-secret-change-in-prod';
 const JWT_EXPIRES = '30d';
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_RATE_LIMIT_MAX = 10;
+const authAttempts = new Map();
+
+function authRateLimit(req, res, next) {
+    const now = Date.now();
+    const key = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const current = authAttempts.get(key);
+
+    if (!current || current.resetAt <= now) {
+        authAttempts.set(key, { count: 1, resetAt: now + AUTH_RATE_LIMIT_WINDOW_MS });
+        return next();
+    }
+
+    if (current.count >= AUTH_RATE_LIMIT_MAX) {
+        return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+    }
+
+    current.count += 1;
+    return next();
+}
 
 // POST /auth/signup
-router.post('/auth/signup', async (req, res) => {
+router.post('/auth/signup', authRateLimit, async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -41,7 +62,7 @@ router.post('/auth/signup', async (req, res) => {
 });
 
 // POST /auth/login
-router.post('/auth/login', async (req, res) => {
+router.post('/auth/login', authRateLimit, async (req, res) => {
     try {
         const { email, password } = req.body;
 

@@ -133,7 +133,7 @@ function InputFormPage() {
   }, [values]);
 
   const stepFields = [
-    ["firstName", "bloodGroup"],
+    ["firstName", "lastName", "bloodGroup"],
     [],
     ["emergencyContacts.0.name", "emergencyContacts.0.phone"],
     [],
@@ -276,8 +276,12 @@ function InputFormPage() {
                 >
                   <Input {...register("firstName", { required: "Required" })} />
                 </Field>
-                <Field label="Last name">
-                  <Input {...register("lastName")} />
+                <Field
+                  label="Last name"
+                  required
+                  error={errors.lastName?.message}
+                >
+                  <Input {...register("lastName", { required: "Required" })} />
                 </Field>
                 <Field label="Date of birth">
                   <Input type="date" {...register("dob")} />
