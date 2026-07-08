@@ -59,7 +59,9 @@ function PublicRiderPage() {
     const firstContact = rider?.emergencyContacts?.find((c) => c?.phone);
     const rawPhone = firstContact?.phone;
     if (!rawPhone) {
-      toast.error("No emergency contact phone number configured for this rider.");
+      toast.error(
+        "No emergency contact phone number configured for this rider.",
+      );
       return;
     }
     const formattedPhone = formatWhatsAppPhone(rawPhone);
@@ -87,7 +89,7 @@ function PublicRiderPage() {
         console.error("Geolocation error:", error);
         triggerWhatsApp(null, null);
       },
-      { enableHighAccuracy: true, timeout: 5000 }
+      { enableHighAccuracy: true, timeout: 5000 },
     );
   };
 

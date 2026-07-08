@@ -70,7 +70,11 @@ function InputFormPage() {
     if (!checkedProfile.current) {
       checkedProfile.current = true;
       if (user?.riderId) {
-        navigate({ to: "/edit/$id", params: { id: String(user.riderId) }, replace: true });
+        navigate({
+          to: "/edit/$id",
+          params: { id: String(user.riderId) },
+          replace: true,
+        });
       }
     }
   }, [user, navigate]);
@@ -183,7 +187,10 @@ function InputFormPage() {
       }
       // Mark draft as belonging to a saved profile so it doesn't auto-load next time
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...data, _savedId: res.id }));
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ ...data, _savedId: res.id }),
+        );
       } catch {}
       localStorage.removeItem(DRAFT_KEY);
       toast.success("Profile saved");
@@ -489,7 +496,12 @@ function InputFormPage() {
             </Button>
 
             {step < STEPS.length - 1 ? (
-              <Button key="next-btn" type="button" onClick={goNext} className="gap-1.5">
+              <Button
+                key="next-btn"
+                type="button"
+                onClick={goNext}
+                className="gap-1.5"
+              >
                 Continue <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (

@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const AuthUser = require('../models/authUser');
 const { buildTranslations } = require('../utils/translate');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const QRCode = require('qrcode');
@@ -23,7 +24,6 @@ async function createRider(req, res) {
 
         // Link riderId on the auth account if authenticated
         if (req.user?.userId) {
-            const AuthUser = require('../models/authUser');
             await AuthUser.findByIdAndUpdate(req.user.userId, { riderId: savedUser._id });
         }
 
@@ -84,6 +84,12 @@ async function downloadQR(req, res) {
 // PATCH /rider/:id
 async function updateRider(req, res) {
     try {
+        const authUser = await AuthUser.findById(req.user.userId).select('riderId');
+        if (!authUser) return res.status(401).json({ error: 'Not authenticated' });
+        if (!authUser.riderId || String(authUser.riderId) !== String(req.params.id)) {
+            return res.status(403).json({ error: 'You do not have permission to update this rider profile' });
+        }
+
         const updates = req.body;
 
         // Remove fields that shouldn't be patched directly

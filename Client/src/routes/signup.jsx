@@ -23,8 +23,6 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
-
-
 function SignupPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { apiGet, downloadQrUrl } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import {
   CheckCircle2,
   Download,
@@ -26,9 +26,11 @@ export const Route = createFileRoute("/result/$id")({
 
 function ResultPage() {
   const { id } = Route.useParams();
+  const { user } = useAuth();
   const [rider, setRider] = useState(null);
   const [error, setError] = useState(null);
   const qrTarget = `${typeof window !== "undefined" ? window.location.origin : ""}/rider/${id}`;
+  const canEdit = user?.riderId && String(user.riderId) === String(id);
 
   useEffect(() => {
     apiGet(`/rider/${id}`, true)
@@ -180,7 +182,7 @@ function ResultPage() {
               <Download className="h-4 w-4" /> Download PDF sticker
             </Button>
           </a>
-          {getToken() && (
+          {canEdit && (
             <Link to="/edit/$id" params={{ id }}>
               <Button size="lg" variant="outline" className="gap-2">
                 <Pencil className="h-4 w-4" /> Edit profile

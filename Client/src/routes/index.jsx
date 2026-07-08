@@ -34,7 +34,7 @@ function Landing() {
   // Hero CTA logic:
   // - Not logged in → signup + login
   // - Logged in, has profile → "View my profile" only
-  // - Logged in, no profile → nothing (they'll be redirected from /inputform anyway, 
+  // - Logged in, no profile → nothing (they'll be redirected from /inputform anyway,
   //   but we still show a "Create profile" CTA for brand-new accounts)
   const heroCTAs = !authChecked ? null : !token ? (
     <>
@@ -244,9 +244,7 @@ function Landing() {
             Create your medical ID in 90 seconds and download a print-ready
             sticker for your helmet.
           </p>
-          <div className="mt-8">
-            {bottomCTA}
-          </div>
+          <div className="mt-8">{bottomCTA}</div>
         </div>
       </section>
 

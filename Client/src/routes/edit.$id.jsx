@@ -269,7 +269,7 @@ function EditProfilePage() {
           if (typeof v === "number") return true;
           if (typeof v === "object" && v !== null) return true;
           return v !== "" && v !== null && v !== undefined;
-        })
+        }),
       );
 
       await apiPatch(`/rider/${id}`, payload, true);
@@ -325,18 +325,28 @@ function EditProfilePage() {
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="First name" required error={errors.firstName?.message}>
-                <Input
-                  {...register("firstName", { required: "Required" })}
-                />
+              <Field
+                label="First name"
+                required
+                error={errors.firstName?.message}
+              >
+                <Input {...register("firstName", { required: "Required" })} />
               </Field>
-              <Field label="Last name" required error={errors.lastName?.message}>
+              <Field
+                label="Last name"
+                required
+                error={errors.lastName?.message}
+              >
                 <Input {...register("lastName", { required: "Required" })} />
               </Field>
               <Field label="Date of birth">
                 <Input type="date" {...register("dob")} />
               </Field>
-              <Field label="Blood group" required error={errors.bloodGroup?.message}>
+              <Field
+                label="Blood group"
+                required
+                error={errors.bloodGroup?.message}
+              >
                 <Controller
                   control={control}
                   name="bloodGroup"
@@ -361,7 +371,11 @@ function EditProfilePage() {
                 <Input {...register("height")} placeholder="e.g. 175" />
               </Field>
               <Field label="Weight (kg)">
-                <Input type="number" {...register("weight")} placeholder="e.g. 72" />
+                <Input
+                  type="number"
+                  {...register("weight")}
+                  placeholder="e.g. 72"
+                />
               </Field>
               <div className="sm:col-span-2">
                 <Field label="Identification mark">
@@ -399,7 +413,10 @@ function EditProfilePage() {
                 />
               </Field>
               <Field label="Previous surgeries or implants">
-                <Textarea rows={2} {...register("previousSurgeriesOrImplants")} />
+                <Textarea
+                  rows={2}
+                  {...register("previousSurgeriesOrImplants")}
+                />
               </Field>
               <div className="grid gap-3 rounded-xl border border-border/60 bg-secondary/40 p-4 sm:grid-cols-2">
                 <Controller
@@ -437,7 +454,9 @@ function EditProfilePage() {
             <div className="space-y-6">
               {[0, 1].map((i) => (
                 <div key={i} className="rounded-xl border border-border/60 p-5">
-                  <div className="mb-3 text-sm font-semibold">Contact {i + 1}</div>
+                  <div className="mb-3 text-sm font-semibold">
+                    Contact {i + 1}
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <Field label="Name">
                       <Input {...register(`emergencyContacts.${i}.name`)} />
