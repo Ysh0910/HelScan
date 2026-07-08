@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { apiGet, apiPatch, uploadImage } from "@/lib/api";
-import { getToken } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import {
   ArrowLeft,
   Loader2,
@@ -139,16 +139,26 @@ function PhotoField({ photo, uploading, onChange }) {
 function EditProfilePage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { token, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const canEdit = Boolean(
+    token && user?.riderId && String(user.riderId) === String(id),
+  );
 
-  // Auth gate
+  // Auth and ownership gate
   useEffect(() => {
-    if (!getToken()) {
+    if (!token) {
       toast.error("Please log in first");
-      navigate({ to: "/login" });
+      navigate({ to: "/login", replace: true });
+      return;
     }
-  }, [navigate]);
+
+    if (!canEdit) {
+      toast.error("You do not have access to edit this profile");
+      navigate({ to: "/", replace: true });
+    }
+  }, [token, canEdit, navigate]);
 
   const {
     register,
@@ -209,7 +219,7 @@ function EditProfilePage() {
 
   // Load existing rider data
   useEffect(() => {
-    if (!id) return;
+    if (!id || !canEdit) return;
     apiGet(`/rider/${id}`, true)
       .then((rider) => {
         // Format dob for date input (YYYY-MM-DD)
@@ -257,7 +267,7 @@ function EditProfilePage() {
       })
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
-  }, [id, reset]);
+  }, [id, canEdit, reset]);
 
   const onSubmit = async (data) => {
     setSubmitting(true);
