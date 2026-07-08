@@ -186,7 +186,7 @@ function PublicRiderPage() {
               </div>
               {rider.dob && (
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {t("dob", lang)}: {rider.dob}
+                  {t("dob", lang)}: {rider.dob.split("T")[0]}
                 </div>
               )}
             </div>
