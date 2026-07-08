@@ -49,7 +49,8 @@ async function createRider(req, res) {
 async function downloadQR(req, res) {
     try {
         const { id } = req.params;
-        const publicUrl = `http://localhost:5173/rider/${id}`;
+        const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, "");
+        const publicUrl = `${clientUrl}/rider/${id}`;
 
         const qrBuffer = await QRCode.toBuffer(publicUrl, {
             width: 400,
