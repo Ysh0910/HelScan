@@ -59,17 +59,30 @@ async function downloadQR(req, res) {
         });
 
         const pdfDoc = await PDFDocument.create();
-        const page   = pdfDoc.addPage([216, 144]);
+        const page = pdfDoc.addPage([216, 144]);
         const qrImage = await pdfDoc.embedPng(qrBuffer);
-        const font    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+        // Load both Bold and Regular fonts for clean typography hierarchy
+        const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+        // Top Header Banner
         page.drawRectangle({ x: 0, y: 120, width: 216, height: 24, color: rgb(0.8, 0, 0) });
         page.drawText('EMERGENCY MEDICAL ID', {
-            x: 45, y: 127, size: 10, font, color: rgb(1, 1, 1),
+            x: 45, y: 127, size: 10, font: fontBold, color: rgb(1, 1, 1),
         });
-        page.drawImage(qrImage, { x: 58, y: 20, width: 100, height: 100 });
+
+        // Main QR Code Image
+        page.drawImage(qrImage, { x: 58, y: 22, width: 100, height: 100 });
+
+        // Option 3: Instructional Call-to-Action right above the ID
+        page.drawText('Scan with phone camera to view rider details', {
+            x: 34, y: 13, size: 6.5, font: fontRegular, color: rgb(0.2, 0.2, 0.2),
+        });
+
+        // Unique ID Hash at the very bottom
         page.drawText(`ID: ${id}`, {
-            x: 10, y: 5, size: 8, color: rgb(0.5, 0.5, 0.5),
+            x: 10, y: 4, size: 7, font: fontRegular, color: rgb(0.5, 0.5, 0.5),
         });
 
         const pdfBytes = await pdfDoc.save();
