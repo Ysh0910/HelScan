@@ -112,7 +112,7 @@ function Landing() {
             </div>
 
             <p className="mt-6 text-xs text-muted-foreground">
-              Free forever · Takes 90 seconds · Works offline for responders
+              Free forever · Takes 90 seconds · No app install required
             </p>
           </div>
 
@@ -254,15 +254,15 @@ function Landing() {
             <ShieldPlus className="h-4 w-4 text-primary" />
             <span>HelScan · Built for riders</span>
           </div>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-foreground">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-foreground">
-              Terms
-            </a>
-            <a href="#" className="hover:text-foreground">
-              Contact
+          <div>
+            Built with ❤️ in Bengaluru by{" "}
+            <a
+              href="https://www.linkedin.com/in/yashwanth910/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:underline transition-colors"
+            >
+              Yashwanth G
             </a>
           </div>
         </div>
