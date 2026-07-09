@@ -71,6 +71,9 @@ function ForgotPasswordPage() {
             <p className="text-sm text-muted-foreground">
               If an account is associated with that email, you will receive a reset link shortly.
             </p>
+            <p className="text-xs text-muted-foreground/80 mt-3 bg-secondary/50 p-3 rounded-xl border border-border/40">
+              💡 Check your spam folder also, and if the email is found there, please unmark it as not spam.
+            </p>
             <div className="pt-2">
               <Link
                 to="/login"
