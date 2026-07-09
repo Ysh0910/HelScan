@@ -53,36 +53,90 @@ async function downloadQR(req, res) {
         const publicUrl = `${clientUrl}/rider/${id}`;
 
         const qrBuffer = await QRCode.toBuffer(publicUrl, {
-            width: 400,
+            width: 500,
             margin: 1,
             errorCorrectionLevel: 'H',
         });
 
+        const PAGE_W = 216; // 3in
+        const PAGE_H = 180; // 2.5in
+
         const pdfDoc = await PDFDocument.create();
-        const page = pdfDoc.addPage([216, 144]);
+        const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
         const qrImage = await pdfDoc.embedPng(qrBuffer);
 
-        // Load both Bold and Regular fonts for clean typography hierarchy
         const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-        // Top Header Banner
-        page.drawRectangle({ x: 0, y: 120, width: 216, height: 24, color: rgb(0.8, 0, 0) });
-        page.drawText('EMERGENCY MEDICAL ID', {
-            x: 45, y: 127, size: 10, font: fontBold, color: rgb(1, 1, 1),
+        // Helper to center text horizontally
+        const centerX = (text, size, font) => (PAGE_W - font.widthOfTextAtSize(text, size)) / 2;
+
+        const RED = rgb(0.78, 0.06, 0.09);
+        const DARK = rgb(0.15, 0.15, 0.15);
+        const GREY = rgb(0.45, 0.45, 0.45);
+        const LIGHT_GREY = rgb(0.8, 0.8, 0.8);
+
+        // --- Dashed cut-guide border (helps whoever trims the sticker) ---
+        page.drawRectangle({
+            x: 3, y: 3, width: PAGE_W - 6, height: PAGE_H - 6,
+            borderColor: LIGHT_GREY, borderWidth: 0.75,
+            borderDashArray: [3, 3],
         });
 
-        // Main QR Code Image
-        page.drawImage(qrImage, { x: 58, y: 22, width: 100, height: 100 });
+        // --- Header banner ---
+        const bannerY = PAGE_H - 28;
+        page.drawRectangle({ x: 0, y: bannerY, width: PAGE_W, height: 28, color: RED });
 
-        // Option 3: Instructional Call-to-Action right above the ID
-        page.drawText('Scan with phone camera to view rider details', {
-            x: 34, y: 13, size: 6.5, font: fontRegular, color: rgb(0.2, 0.2, 0.2),
+        // Simple white cross icon
+        const crossX = 16, crossY = bannerY + 14;
+        page.drawRectangle({ x: crossX - 5, y: crossY - 1.5, width: 10, height: 3, color: rgb(1, 1, 1) });
+        page.drawRectangle({ x: crossX - 1.5, y: crossY - 5, width: 3, height: 10, color: rgb(1, 1, 1) });
+
+        const title = 'EMERGENCY MEDICAL ID';
+        page.drawText(title, {
+            x: centerX(title, 11, fontBold) + 6, // slight offset to balance icon
+            y: bannerY + 10,
+            size: 11,
+            font: fontBold,
+            color: rgb(1, 1, 1),
         });
 
-        // Unique ID Hash at the very bottom
-        page.drawText(`ID: ${id}`, {
-            x: 10, y: 4, size: 7, font: fontRegular, color: rgb(0.5, 0.5, 0.5),
+        // --- QR frame (white quiet zone + thin red border) ---
+        const frameSize = 100;
+        const frameX = (PAGE_W - frameSize) / 2;
+        const frameY = 44;
+
+        page.drawRectangle({
+            x: frameX, y: frameY, width: frameSize, height: frameSize,
+            color: rgb(1, 1, 1),
+            borderColor: RED, borderWidth: 1.25,
+        });
+
+        const qrSize = frameSize - 12;
+        page.drawImage(qrImage, {
+            x: frameX + 6, y: frameY + 6, width: qrSize, height: qrSize,
+        });
+
+        // --- Call to action ---
+        const cta = 'SCAN FOR MEDICAL INFO';
+        page.drawText(cta, {
+            x: centerX(cta, 8, fontBold), y: 30, size: 8, font: fontBold, color: DARK,
+        });
+
+        const subtitle = 'In case of an accident, please scan this code';
+        page.drawText(subtitle, {
+            x: centerX(subtitle, 6, fontRegular), y: 21, size: 6, font: fontRegular, color: GREY,
+        });
+
+        // --- Footer divider + ID ---
+        page.drawLine({
+            start: { x: 20, y: 13 }, end: { x: PAGE_W - 20, y: 13 },
+            thickness: 0.5, color: LIGHT_GREY,
+        });
+
+        const idText = `ID: ${id}`;
+        page.drawText(idText, {
+            x: centerX(idText, 6.5, fontRegular), y: 5, size: 6.5, font: fontRegular, color: GREY,
         });
 
         const pdfBytes = await pdfDoc.save();
