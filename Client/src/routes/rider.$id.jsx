@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { LANGS, t } from "@/lib/i18n";
-import { Heart, Phone, User, Loader2, Languages } from "lucide-react";
+import { Heart, Phone, User, Loader2, Languages, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/rider/$id")({
@@ -37,13 +37,37 @@ function PublicRiderPage() {
   const [rider, setRider] = useState(null);
   const [error, setError] = useState(null);
   const [lang, setLang] = useState("en");
+  const [showCaution, setShowCaution] = useState(true);
 
   useEffect(() => {
+    // 1. Fetch rider details
     apiGet(`/rider/${id}`)
       .then(setRider)
       .catch((e) =>
         setError(e instanceof Error ? e.message : "Failed to load"),
       );
+
+    // 2. Query scanner geolocation and log the scan event (IP is captured on backend)
+    const logScan = (latitude = null, longitude = null) => {
+      apiPost(`/rider/${id}/scan`, { latitude, longitude })
+        .then(() => console.log("Scan logged successfully"))
+        .catch((err) => console.error("Error logging scan:", err));
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          logScan(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.warn("Geolocation permission denied or error:", error);
+          logScan(null, null);
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else {
+      logScan(null, null);
+    }
   }, [id]);
 
   const formatWhatsAppPhone = (phone) => {
@@ -116,7 +140,35 @@ function PublicRiderPage() {
   const g = (k) => pick(rider, k, lang);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
+      {/* Caution Modal */}
+      {showCaution && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 no-print animate-fade-in">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8 animate-scale-in">
+            {/* Close button (X) */}
+            <button
+              onClick={() => setShowCaution(false)}
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+              aria-label="Close Warning"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400">
+                <span className="text-xl">⚠️</span>
+              </div>
+              <h2 className="text-xl font-bold text-destructive tracking-tight sm:text-2xl">
+                Caution: Confidential Information
+              </h2>
+              <p className="text-sm text-foreground/90 leading-relaxed text-justify bg-secondary/35 p-4 rounded-xl border border-border/40">
+                This information is crucial for the person's well-being. Please be advised that by scanning this Tag, your IP address has been logged and shared with the owner. This Emergency Medical ID contains sensitive information intended for use only in emergency situations. Any misuse or unauthorised access may result in legal consequences. The IP address record is a precautionary measure to ensure responsible use. Remember, this information is meant to save lives. Any misuse will not be tolerated. In case of emergency, please proceed responsibly and contact the relevant authorities.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Emergency banner */}
       <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-elegant">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3 sm:px-6">

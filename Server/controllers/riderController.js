@@ -144,5 +144,41 @@ async function updateRider(req, res) {
     }
 }
 
-module.exports = { getRider, createRider, downloadQR, updateRider };
+// POST /rider/:id/scan
+async function logScanEvent(req, res) {
+    try {
+        const { id } = req.params;
+        const { latitude, longitude } = req.body;
+
+        const rider = await User.findById(id);
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        const owner = await AuthUser.findOne({ riderId: id });
+        if (!owner) {
+            console.warn(`Scan logged for rider ${id} but no owner email found.`);
+            return res.status(200).json({ message: 'Scan logged (no owner account)' });
+        }
+
+        const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        const ip = rawIp.split(',')[0].trim();
+        const riderName = `${rider.firstName || ''} ${rider.lastName || ''}`.trim() || 'Emergency ID';
+
+        const { sendScanAlertEmail } = require('../utils/scanEmail');
+        await sendScanAlertEmail(owner.email, riderName, {
+            ip,
+            latitude,
+            longitude,
+            timestamp: new Date()
+        });
+
+        res.status(200).json({ message: 'Scan logged and owner notified' });
+    } catch (error) {
+        console.error('Error logging scan event:', error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+}
+
+module.exports = { getRider, createRider, downloadQR, updateRider, logScanEvent };
 
