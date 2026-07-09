@@ -128,9 +128,9 @@ function Landing() {
                   <div className="mt-4 flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full bg-gradient-primary" />
                     <div>
-                      <div className="text-lg font-semibold">Arjun Menon</div>
+                      <div className="text-lg font-semibold">Hamza Ali Mazari</div>
                       <div className="text-sm text-muted-foreground">
-                        Bengaluru · Age 31
+                        Lyari · Age 31
                       </div>
                     </div>
                   </div>
@@ -139,20 +139,20 @@ function Landing() {
                       <div className="text-xs uppercase tracking-wider text-muted-foreground">
                         Blood
                       </div>
-                      <div className="text-2xl font-bold text-primary">O+</div>
+                      <div className="text-2xl font-bold text-primary">B+</div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-wider text-muted-foreground">
                         Allergies
                       </div>
-                      <div className="font-medium">Penicillin</div>
+                      <div className="font-medium">Rehman Dakait,Major Iqbal</div>
                     </div>
                     <div className="col-span-2">
                       <div className="text-xs uppercase tracking-wider text-muted-foreground">
                         In case of emergency
                       </div>
                       <div className="font-medium">
-                        Priya Menon · +91 98•• ••20
+                        Jameel Jamali · +91 98•• ••20
                       </div>
                     </div>
                   </div>
