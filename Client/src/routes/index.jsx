@@ -126,7 +126,13 @@ function Landing() {
                     <HeartPulse className="h-4 w-4" /> Emergency Medical ID
                   </div>
                   <div className="mt-4 flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-gradient-primary" />
+                    <div className="h-16 w-16 rounded-full bg-gradient-primary overflow-hidden border border-border/10 flex items-center justify-center">
+                      <img 
+                        src="/hamza.png" 
+                        alt="Hamza Ali Mazari" 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                     <div>
                       <div className="text-lg font-semibold">Hamza Ali Mazari</div>
                       <div className="text-sm text-muted-foreground">
