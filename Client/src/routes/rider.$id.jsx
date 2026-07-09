@@ -322,7 +322,7 @@ function PublicRiderPage() {
                         className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02] active:scale-100"
                       >
                         <Phone className="h-4 w-4" />
-                        {c.phone}
+                        {t("callNow", lang)}
                       </a>
                     )}
                   </li>
