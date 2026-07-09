@@ -103,5 +103,77 @@ router.get('/auth/me', requireAuth, async (req, res) => {
     }
 });
 
+// POST /auth/forgot-password
+router.post('/auth/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const user = await AuthUser.findOne({ email });
+        // To prevent email enumeration, return 200 OK even if the email doesn't exist
+        if (!user) {
+            return res.status(200).json({ message: 'If this email is registered, a password reset link has been sent.' });
+        }
+
+        // Generate temporary reset token using secret + user's current password hash
+        const resetSecret = JWT_SECRET + user.passwordHash;
+        const resetToken = jwt.sign(
+            { userId: user._id, email: user.email },
+            resetSecret,
+            { expiresIn: '15m' }
+        );
+
+        const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, "");
+        const resetUrl = `${clientUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+
+        const { sendResetEmail } = require('../utils/email');
+        await sendResetEmail(user.email, resetUrl);
+
+        res.status(200).json({ message: 'If this email is registered, a password reset link has been sent.' });
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json({ error: 'An error occurred. Please try again later.' });
+    }
+});
+
+// POST /auth/reset-password
+router.post('/auth/reset-password', async (req, res) => {
+    try {
+        const { email, token, password } = req.body;
+
+        if (!email || !token || !password) {
+            return res.status(400).json({ error: 'All fields (email, token, new password) are required.' });
+        }
+        if (password.length < 8) {
+            return res.status(400).json({ error: 'Password must be at least 8 characters' });
+        }
+
+        const user = await AuthUser.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired password reset request.' });
+        }
+
+        // Verify token with combined secret
+        const resetSecret = JWT_SECRET + user.passwordHash;
+        try {
+            jwt.verify(token, resetSecret);
+        } catch (jwtErr) {
+            return res.status(400).json({ error: 'Invalid or expired password reset token.' });
+        }
+
+        // Update password
+        const passwordHash = await bcrypt.hash(password, 12);
+        user.passwordHash = passwordHash;
+        await user.save();
+
+        res.status(200).json({ message: 'Password has been successfully reset. You can now log in.' });
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ error: 'An error occurred. Please try again later.' });
+    }
+});
+
 module.exports = router;
 
