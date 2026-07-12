@@ -3,6 +3,9 @@ const AuthUser = require('../models/authUser');
 const { buildTranslations } = require('../utils/translate');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const QRCode = require('qrcode');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'helscan-dev-secret-change-in-prod';
 
 // GET /rider/:id
 async function getRider(req, res) {
@@ -213,6 +216,34 @@ async function logScanEvent(req, res) {
         if (!owner) {
             console.warn(`Scan logged for rider ${id} but no owner email found.`);
             return res.status(200).json({ message: 'Scan logged (no owner account)' });
+        }
+
+        // --- Solution A: Ignore common crawler/preview bots ---
+        const userAgent = req.headers['user-agent'] || '';
+        const isBot = /bot|crawler|spider|facebookexternalhit|whatsapp|slack|telegram/i.test(userAgent);
+        if (isBot) {
+            console.log(`Scan logged but visitor is a bot/crawler: "${userAgent}". Skipping alert email.`);
+            return res.status(200).json({ message: 'Scan logged (bot ignored)' });
+        }
+
+        // --- Solution B: Ignore views by the profile owner ---
+        let isOwner = false;
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.slice(7);
+                const decoded = jwt.verify(token, JWT_SECRET);
+                if (decoded && String(decoded.userId) === String(owner._id)) {
+                    isOwner = true;
+                }
+            } catch (err) {
+                // If invalid token, just treat as normal visitor
+            }
+        }
+
+        if (isOwner) {
+            console.log(`Scan logged but visitor is the profile owner. Skipping alert email.`);
+            return res.status(200).json({ message: 'Scan logged (owner visit ignored)' });
         }
 
         const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';

@@ -49,7 +49,7 @@ function PublicRiderPage() {
 
     // 2. Query scanner geolocation and log the scan event (IP is captured on backend)
     const logScan = (latitude = null, longitude = null) => {
-      apiPost(`/rider/${id}/scan`, { latitude, longitude })
+      apiPost(`/rider/${id}/scan`, { latitude, longitude }, true)
         .then(() => console.log("Scan logged successfully"))
         .catch((err) => console.error("Error logging scan:", err));
     };
